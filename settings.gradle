@@ -1,0 +1,3 @@
+rootProject.name = 'beacon-validator'
+
+include 'validator', 'client', 'aggregatorClient'
