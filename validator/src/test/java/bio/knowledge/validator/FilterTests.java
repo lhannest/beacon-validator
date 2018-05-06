@@ -1,6 +1,8 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.*;
+
+import static bio.knowledge.validator.Assert.assertTrue;
+import static bio.knowledge.validator.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +10,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import org.assertj.core.util.Arrays;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Stopwatch;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,8 +29,6 @@ import bio.knowledge.client.model.BeaconStatement;
 import bio.knowledge.validator.containers.FilterSetContainer;
 import bio.knowledge.validator.containers.FilterSetContainer.FilterSet;
 import bio.knowledge.validator.containers.MetadataContainer;
-import bio.knowledge.validator.logging.Logger;
-import bio.knowledge.validator.logging.LoggerFactory;
 import bio.knowledge.validator.rules.RuleContainer;
 
 @RunWith(SpringRunner.class)
@@ -70,9 +67,10 @@ public class FilterTests {
 				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 1, 100);
 				
 				for (BeaconConcept concept : concepts) {
-					assertTrue("Types filter failed for " + concept.getId(), types.contains(concept.getType()));
+					assertTrue(apiClient, "Types filter failed for " + concept.getId(), types.contains(concept.getType()));
 					
 					assertTrue(
+							apiClient,
 							"Keywords filter failed for " + concept.getId(),
 							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName())) ||
 							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition())) ||
@@ -111,7 +109,11 @@ public class FilterTests {
 					List<String> targets = new ArrayList<String>();
 					
 					for (BeaconStatement statement : statements) {
-						assertEquals("Predicate filter failed for statement " + statement.getId(), statement.getPredicate().getName(), predicate);
+						assertTrue(
+								apiClient,
+								"Predicate filter failed for statement " + statement.getId(),
+								statement.getPredicate().getName().equals(predicate)
+						);
 						
 						Concept subject = statement.getSubject();
 						Concept object = statement.getObject();
@@ -121,7 +123,7 @@ public class FilterTests {
 						} else if (s.contains(object.getId())) {
 							targets.add(subject.getId());
 						} else {
-							fail("Source filter failed for statement " + statement.getId());
+							fail(apiClient, "Source filter failed for statement " + statement.getId());
 						}
 					}
 					
@@ -133,13 +135,23 @@ public class FilterTests {
 						String subjectId = statement.getSubject().getId();
 						String objectId = statement.getObject().getId();
 						
+						String targetId = null;
+						
 						if (s.contains(subjectId)) {
-							assertTrue("Target filter failed for statement " + statement.getId(), targets.contains(objectId));
+							targetId = objectId;
 						} else if (s.contains(objectId)) {
-							assertTrue("Target filter failed for statement " + statement.getId(), targets.contains(subjectId));
+							targetId = subjectId;
 						} else {
-							fail("Source filter failed for statement " + statement.getId());
+							fail(apiClient, "Source filter failed for statement " + statement.getId());
 						}
+						
+						//TODO: Check against exact matches list
+						
+						assertTrue(
+								apiClient,
+								"Target filter failed for statement " + statement.getId(),
+								targets.isEmpty() || targets.contains(targetId)
+						);
 					}
 				}
 			}
