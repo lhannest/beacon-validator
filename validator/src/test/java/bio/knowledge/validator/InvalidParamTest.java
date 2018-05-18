@@ -1,16 +1,13 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.fail;
+import static bio.knowledge.validator.Assert.fail;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Stopwatch;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +17,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.api.StatementsApi;
-import bio.knowledge.validator.logging.Logger;
-import bio.knowledge.validator.logging.LoggerFactory;
 import bio.knowledge.validator.rules.RuleContainer;
 
 @RunWith(SpringRunner.class)
@@ -54,14 +49,14 @@ public class InvalidParamTest {
 		
 		try {
 			conceptsApi.getConcepts(null, null, null, null);
-			fail(message);
+			fail(apiClient, message);
 		} catch (ApiException e) {
 			apiClient.clearQueryHistory();
 		}
 		
 		try {
 			statementsApi.getStatements(null, null, null, null, null, null, null);
-			fail(message);
+			fail(apiClient, message);
 		} catch (ApiException e) {
 			apiClient.clearQueryHistory();
 		}

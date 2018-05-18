@@ -76,6 +76,10 @@ public class ApiClient extends bio.knowledge.client.ApiClient {
 			return super.execute(call, returnType);
 		} catch (ApiException e) {
 			throw new BeaconException(e, this);
+		} catch (Exception e) {
+			System.out.print("WHY");
+			e.printStackTrace();
+			throw e;
 		}
     }
 }

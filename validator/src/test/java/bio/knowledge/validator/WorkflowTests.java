@@ -1,8 +1,7 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static bio.knowledge.validator.Assert.assertFalse;
+import static bio.knowledge.validator.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
@@ -67,11 +66,13 @@ public class WorkflowTests {
 		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, PAGE_NUMBER, CONCEPTS_PAGE_SIZE);
 		
 		assertFalse(
+				apiClient,
 				"No concepts found for filter keywords/types: " + CONCEPTS_KEYWORDS + "/" + CONCEPTS_TYPES,
 				concepts == null || concepts.isEmpty()
 		);
 		
 		assertFalse(
+				apiClient,
 				"Requested page size of " + CONCEPTS_PAGE_SIZE + " got " + concepts.size() + " instead",
 				concepts.size() > CONCEPTS_PAGE_SIZE
 		);
@@ -86,6 +87,7 @@ public class WorkflowTests {
 			String type = concept.getType();
 			
 			assertTrue(
+					apiClient,
 					"Keyword filter failed for: " + concept.getId(),
 					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(name, k)) ||
 					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(definition, k)) ||
@@ -93,6 +95,7 @@ public class WorkflowTests {
 			);
 			
 			assertTrue(
+					apiClient,
 					"Type filter failed for: " + concept.getId(),
 					CONCEPTS_TYPES == null || CONCEPTS_TYPES.stream().anyMatch(type::equals)
 			);
@@ -121,26 +124,31 @@ public class WorkflowTests {
 				if (detail.getSynonyms() == null) logger.warn("Concept " + detail.getId() + " has null synonyms");
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "ID"),
 						Objects.equals(detail.getId(), concept.getId())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "definition"),
 						Objects.equals(detail.getDefinition(), concept.getDefinition())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "name"),
 						Objects.equals(detail.getName(), concept.getName())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "type"),
 						Objects.equals(detail.getType(), concept.getType())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "synonyms"),
 						Objects.equals(detail.getSynonyms(), concept.getSynonyms())
 				);
@@ -173,6 +181,7 @@ public class WorkflowTests {
 				if (subject.getId().equals(concept.getId())) {
 					anyMatch = true;
 					assertTrue(
+							apiClient,
 							String.format(msg, subject.getId(), statement.getId()),
 							Objects.equals(subject.getType(), concept.getType()) &&
 							Objects.equals(subject.getName(), concept.getName())
@@ -180,6 +189,7 @@ public class WorkflowTests {
 				} else if (object.getId().equals(concept.getId())) {
 					anyMatch = true;
 					assertTrue(
+							apiClient,
 							String.format(msg, object.getId(), statement.getId()),
 							Objects.equals(object.getType(), concept.getType()) &&
 							Objects.equals(object.getName(), concept.getName())
@@ -187,7 +197,7 @@ public class WorkflowTests {
 				}
 			}
 			
-			assertTrue("None of the given concepts found in statement " + statement.getId(), anyMatch);
+			assertTrue(apiClient, "None of the given concepts found in statement " + statement.getId(), anyMatch);
 		}
 	}
 	
@@ -202,17 +212,17 @@ public class WorkflowTests {
 			List<String> matches1 = conceptsApi.getExactMatchesToConcept(concept.getId());
 			Set<String> matches1Set = new HashSet<String>(matches1);
 			
-			assertEquals("The response is not a set", matches1.size(), matches1Set.size());
+			assertTrue(apiClient, "The response is not a set", matches1.size() == matches1Set.size());
 			
 			List<String> matches2 = conceptsApi.getExactMatchesToConceptList(Utils.asList(concept.getId()));
 			Set<String> matches2Set = new HashSet<String>(matches2);
 			
-			assertEquals("The response is not a set", matches2.size(), matches2Set.size());
+			assertTrue(apiClient, "The response is not a set", matches2.size() == matches2Set.size());
 			
 			matches1Set.add(concept.getId());
 			matches2Set.add(concept.getId());
 			
-			assertTrue("The two exact match endpoints did not return the same data", matches1Set.equals(matches2Set));
+			assertTrue(apiClient, "The two exact match endpoints did not return the same data", matches1Set.equals(matches2Set));
 		}
 	}
 	

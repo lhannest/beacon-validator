@@ -32,7 +32,6 @@ public class Logger {
 		
 		fileAppender.setContext(loggerContext);
 		fileAppender.setName("timestamp");
-		fileAppender.setFile(BASE_DIR + "/" + HOST + "/" + DEFAULT_FILE_NAME + ".log");
 		
 		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
 		encoder.setContext(loggerContext);
@@ -81,19 +80,21 @@ public class Logger {
 		}
 		
 		setFileName(methodName);
-		
 		logger.error(msg);
 	}
 	
 	public void error(String msg) {
+		setFileName(DEFAULT_FILE_NAME);
 		this.logger.error(msg);
 	}
 	
 	public void info(String msg) {
+		setFileName(DEFAULT_FILE_NAME);
 		this.logger.info(msg);
 	}
 	
 	public void warn(String msg) {
+		setFileName(DEFAULT_FILE_NAME);
 		this.logger.warn(msg);
 	}
 

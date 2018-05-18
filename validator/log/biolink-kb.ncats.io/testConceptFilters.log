@@ -1,2 +1,0 @@
-29508 Test worker ERROR - bio.knowledge.validator.BeaconException: Types filter failed on entry FlyBase:FBgn0000608
-	https://biolink-kb.ncats.io/concepts?keywords=e&types=gene&pageNumber=1&pageSize=100

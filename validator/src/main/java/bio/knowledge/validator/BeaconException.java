@@ -1,8 +1,5 @@
 package bio.knowledge.validator;
 
-import java.util.List;
-import java.util.Map;
-
 import bio.knowledge.client.ApiException;
 
 /**
@@ -10,19 +7,16 @@ import bio.knowledge.client.ApiException;
  * history of queries at whatever level the exception is being processed for
  * logging.
  */
-public class BeaconException extends ApiException {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4335257178039062378L;
-	
+public class BeaconException extends ApiException implements BeaconExceptionInterface {
+
+	private static final long serialVersionUID = -2392100649988848998L;
+
 	private ApiClient client;
 	
 	public BeaconException(String message, ApiClient client) {
 		super(message);
 		
-		this.client = client;		
+		this.client = client;
 	}
 	
 	/**
@@ -35,6 +29,7 @@ public class BeaconException extends ApiException {
 		this.client = client;
 	}
 	
+	@Override
 	public ApiClient getApiClient() {
 		return this.client;
 	}
