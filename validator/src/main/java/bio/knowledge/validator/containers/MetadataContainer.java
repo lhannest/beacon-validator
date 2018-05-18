@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.MetadataApi;
-import bio.knowledge.client.model.BeaconConceptType;
+import bio.knowledge.client.model.BeaconConceptCategory;
 import bio.knowledge.client.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.client.model.BeaconPredicate;
 import bio.knowledge.validator.ApiClient;
@@ -20,7 +20,7 @@ public class MetadataContainer {
 	@Value(value="${basePath}")
 	public String BASE_PATH;
 	
-	private List<BeaconConceptType> types;
+	private List<BeaconConceptCategory> types;
 	private List<BeaconKnowledgeMapStatement> kmap;
 	private List<BeaconPredicate> predicates;
 	
@@ -31,11 +31,11 @@ public class MetadataContainer {
 		metadataApi = new MetadataApi(new ApiClient(BASE_PATH));
 	}
 	
-	public List<BeaconConceptType> getTypes() throws ApiException {
+	public List<BeaconConceptCategory> getCategories() throws ApiException {
 		if (types != null) {
 			return this.types;
 		} else {
-			types = metadataApi.getConceptTypes();
+			types = metadataApi.getConceptCategories();
 			return types;
 		}
 	}
