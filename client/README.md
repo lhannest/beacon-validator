@@ -86,15 +86,14 @@ public class ConceptsApiExample {
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://ndex-kb.ncats.io/*
+All URIs are relative to *https://rkb.ncats.io/*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *ConceptsApi* | [**getConceptDetails**](docs/ConceptsApi.md#getConceptDetails) | **GET** /concepts/{conceptId} | 
 *ConceptsApi* | [**getConcepts**](docs/ConceptsApi.md#getConcepts) | **GET** /concepts | 
-*ConceptsApi* | [**getExactMatchesToConcept**](docs/ConceptsApi.md#getExactMatchesToConcept) | **GET** /exactmatches/{conceptId} | 
 *ConceptsApi* | [**getExactMatchesToConceptList**](docs/ConceptsApi.md#getExactMatchesToConceptList) | **GET** /exactmatches | 
-*MetadataApi* | [**getConceptTypes**](docs/MetadataApi.md#getConceptTypes) | **GET** /types | 
+*MetadataApi* | [**getConceptCategories**](docs/MetadataApi.md#getConceptCategories) | **GET** /categories | 
 *MetadataApi* | [**getKnowledgeMap**](docs/MetadataApi.md#getKnowledgeMap) | **GET** /kmap | 
 *MetadataApi* | [**getPredicates**](docs/MetadataApi.md#getPredicates) | **GET** /predicates | 
 *StatementsApi* | [**getEvidence**](docs/StatementsApi.md#getEvidence) | **GET** /evidence/{statementId} | 
@@ -105,8 +104,8 @@ Class | Method | HTTP request | Description
 
  - [BeaconAnnotation](docs/BeaconAnnotation.md)
  - [BeaconConcept](docs/BeaconConcept.md)
+ - [BeaconConceptCategory](docs/BeaconConceptCategory.md)
  - [BeaconConceptDetail](docs/BeaconConceptDetail.md)
- - [BeaconConceptType](docs/BeaconConceptType.md)
  - [BeaconConceptWithDetails](docs/BeaconConceptWithDetails.md)
  - [BeaconKnowledgeMapObject](docs/BeaconKnowledgeMapObject.md)
  - [BeaconKnowledgeMapPredicate](docs/BeaconKnowledgeMapPredicate.md)
@@ -117,6 +116,7 @@ Class | Method | HTTP request | Description
  - [BeaconStatementObject](docs/BeaconStatementObject.md)
  - [BeaconStatementPredicate](docs/BeaconStatementPredicate.md)
  - [BeaconStatementSubject](docs/BeaconStatementSubject.md)
+ - [ExactMatchResponse](docs/ExactMatchResponse.md)
 
 
 ## Documentation for Authorization
