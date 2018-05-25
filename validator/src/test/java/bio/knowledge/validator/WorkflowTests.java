@@ -162,11 +162,11 @@ public class WorkflowTests {
 		StatementsApi statementsApi = new StatementsApi(apiClient);
 		
 		//TODO: remove magic number
-		//TODO: currently times out if more than 1 concept searched at statements endpoint
 		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, 1);
 		
 		List<String> c = concepts.stream().map(x -> x.getId()).collect(Collectors.toList());
 		
+		//TODO: currently times out if more than 1 concept searched at statements endpoint
 		List<BeaconStatement> statements = statementsApi.getStatements(c, null, null, null, null, STATEMENTS_PAGE_SIZE);
 		
 		for (BeaconStatement statement : statements) {
@@ -231,5 +231,6 @@ public class WorkflowTests {
 	private boolean contains(String superstring, String substring) {
 		return superstring.toLowerCase().contains(substring.toLowerCase());
 	}
+	
 
 }
