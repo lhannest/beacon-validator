@@ -1,6 +1,8 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.*;
+
+import static bio.knowledge.validator.Assert.assertTrue;
+import static bio.knowledge.validator.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +10,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import org.assertj.core.util.Arrays;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Stopwatch;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,14 +23,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.api.StatementsApi;
-import bio.knowledge.client.extra.Concept;
 import bio.knowledge.client.model.BeaconConcept;
 import bio.knowledge.client.model.BeaconStatement;
+import bio.knowledge.client.model.BeaconStatementObject;
+import bio.knowledge.client.model.BeaconStatementSubject;
 import bio.knowledge.validator.containers.FilterSetContainer;
 import bio.knowledge.validator.containers.FilterSetContainer.FilterSet;
 import bio.knowledge.validator.containers.MetadataContainer;
-import bio.knowledge.validator.logging.Logger;
-import bio.knowledge.validator.logging.LoggerFactory;
 import bio.knowledge.validator.rules.RuleContainer;
 
 @RunWith(SpringRunner.class)
@@ -67,12 +65,17 @@ public class FilterTests {
 		
 		for (List<String> keywords : keywordsList) {
 			for (List<String> types : typesList) {
-				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 1, 100);
+				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 100);
 				
 				for (BeaconConcept concept : concepts) {
-					assertTrue("Types filter failed for " + concept.getId(), types.contains(concept.getType()));
+					assertTrue(apiClient, "Types filter failed for " + concept.getId(), types.contains(concept.getCategory()));
+					
+					Boolean name = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName()));
+					Boolean definition = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition()));
+					Boolean synonyms = keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)));
 					
 					assertTrue(
+							apiClient,
 							"Keywords filter failed for " + concept.getId(),
 							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName())) ||
 							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition())) ||
@@ -101,45 +104,59 @@ public class FilterTests {
 		
 		for (List<String> keywords : keywordsList) {
 			for (List<String> types : typesList) {
-				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, null, 1, FILTER_SIZE);
+				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, null, FILTER_SIZE);
 				
 				List<String> s = concepts.stream().map(concept -> concept.getId()).collect(Collectors.toList());
 				
 				for (String predicate : predicates) {
-					List<BeaconStatement> statements = statementsApi.getStatements(s, predicate, null, keywords, types, 1, 100);
+					List<BeaconStatement> statements = statementsApi.getStatements(s, Utils.asList(predicate), null, keywords, types, 100);
 					
 					List<String> targets = new ArrayList<String>();
 					
 					for (BeaconStatement statement : statements) {
-						assertEquals("Predicate filter failed for statement " + statement.getId(), statement.getPredicate().getName(), predicate);
+						assertTrue(
+								apiClient,
+								"Predicate filter failed for statement " + statement.getId(),
+								statement.getPredicate().getEdgeLabel().equals(predicate)
+						);
 						
-						Concept subject = statement.getSubject();
-						Concept object = statement.getObject();
+						BeaconStatementSubject subject = statement.getSubject();
+						BeaconStatementObject object = statement.getObject();
 						
 						if (s.contains(subject.getId())) {
 							targets.add(object.getId());
 						} else if (s.contains(object.getId())) {
 							targets.add(subject.getId());
 						} else {
-							fail("Source filter failed for statement " + statement.getId());
+							fail(apiClient, "Source filter failed for statement " + statement.getId());
 						}
 					}
 					
 					targets  = targets.subList(0, Math.min(FILTER_SIZE, targets.size()));
 					
-					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, targets, null, null, 1, 100);
+					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, targets, null, null, 100);
 					
 					for (BeaconStatement statement : targetedStatements) {
 						String subjectId = statement.getSubject().getId();
 						String objectId = statement.getObject().getId();
 						
+						String targetId = null;
+						
 						if (s.contains(subjectId)) {
-							assertTrue("Target filter failed for statement " + statement.getId(), targets.contains(objectId));
+							targetId = objectId;
 						} else if (s.contains(objectId)) {
-							assertTrue("Target filter failed for statement " + statement.getId(), targets.contains(subjectId));
+							targetId = subjectId;
 						} else {
-							fail("Source filter failed for statement " + statement.getId());
+							fail(apiClient, "Source filter failed for statement " + statement.getId());
 						}
+						
+						//TODO: Check against exact matches list
+						
+						assertTrue(
+								apiClient,
+								"Target filter failed for statement " + statement.getId(),
+								targets.isEmpty() || targets.contains(targetId)
+						);
 					}
 				}
 			}
@@ -149,7 +166,11 @@ public class FilterTests {
 	/**
 	 * Returns true if any term in substring is contained in superstring, false otherwise.
 	 */
-	private boolean contains(String superstring, String substring) {		
+	private boolean contains(String superstring, String substring) {
+		if (substring == null) {
+			return false;
+		}
+		
 		if (substring.contains(" ")) {
 			String[] substrings = substring.split(" ");
 			
@@ -163,6 +184,6 @@ public class FilterTests {
 		superstring = superstring.toLowerCase();
 		substring = substring.toLowerCase();
 		
-		return superstring.contains(substring);
+		return (superstring.contains(substring) || substring.contains(superstring));
 	}
 }

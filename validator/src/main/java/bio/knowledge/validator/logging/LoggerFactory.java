@@ -21,6 +21,10 @@ public class LoggerFactory {
 		
 		basePath = Utils.getHost(basePath);
 		
+		if (basePath.contains(":")) {
+			basePath = basePath.split(":")[0];
+		}
+		
 		if (map.containsKey(basePath)) {
 			return map.get(basePath);
 		} else {			

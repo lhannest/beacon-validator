@@ -1,5 +1,6 @@
 package bio.knowledge.validator.rules;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import bio.knowledge.validator.ApiClient;
 import bio.knowledge.validator.BeaconException;
+import bio.knowledge.validator.BeaconExceptionInterface;
 import bio.knowledge.validator.logging.Logger;
 import bio.knowledge.validator.logging.LoggerFactory;
 
@@ -36,14 +38,18 @@ public class RuleContainer {
 	@PostConstruct
 	private void init() {
 		testWatcher = new TestWatcher() {
+			
 			@Override
 			public void failed(Throwable e, Description description) {
-				if (e instanceof BeaconException) {
-					ApiClient apiClient = ((BeaconException) e).getApiClient();
+				if (e instanceof BeaconExceptionInterface) {
+					ApiClient apiClient = ((BeaconExceptionInterface) e).getApiClient();
 					
 					Logger logger = loggerFactory.get(apiClient);
 					
 					logger.error(e, description.getMethodName(), apiClient.getQueryHistory());
+				} else {
+					Logger logger = loggerFactory.get(BASE_PATH);
+					logger.error(e, description.getMethodName(), new ArrayList<String>());
 				}
 		    }
 		};
@@ -86,7 +92,7 @@ public class RuleContainer {
 	}
 	
 	public TestWatcher getTestWatcher() {
-		return this.testWatcher;
+		return testWatcher;
 	}
 	
 	public Stopwatch getStopwatch() {

@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.model.BeaconConcept;
+import bio.knowledge.client.model.BeaconConceptCategory;
 import bio.knowledge.validator.ApiClient;
-import bio.knowledge.validator.BeaconException;
 import bio.knowledge.validator.Utils;
 
 @Component
@@ -49,7 +49,9 @@ public class FilterSetContainer {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		
-		List<String> types = metadataContainer.getTypes().stream().map(t -> t.getLabel()).collect(Collectors.toList());
+		List<BeaconConceptCategory> conceptTypes = metadataContainer.getCategories();
+		
+		List<String> types = conceptTypes.stream().map(t -> t.getCategory()).collect(Collectors.toList());
 		
 		// There will be keywords for each type that produces concepts
 		List<String> keywords = new ArrayList<String>();
@@ -59,15 +61,14 @@ public class FilterSetContainer {
 				continue;
 			}
 			
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), Utils.asList(type), 1, 100);
-			
-			if (!concepts.isEmpty()) {
-				keywords.add(concepts.get(0).getName());
-				keywords.addAll(concepts.get(0).getSynonyms());
-			}
+			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), Utils.asList(type), 100);
 			
 			for (BeaconConcept concept : concepts) {
-				throw new BeaconException("Types filter failed on entry " + concept.getId(), apiClient);
+				if (concept.getCategory().equals(type)) {
+					keywords.add(concept.getName());
+					keywords.addAll(concept.getSynonyms());
+					break;
+				}
 			}
 		}
 		

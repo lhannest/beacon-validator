@@ -1,17 +1,16 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.*;
+import static bio.knowledge.validator.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Stopwatch;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,182 +23,145 @@ import bio.knowledge.client.api.MetadataApi;
 import bio.knowledge.client.api.StatementsApi;
 import bio.knowledge.client.model.BeaconConcept;
 import bio.knowledge.client.model.BeaconStatement;
-import bio.knowledge.validator.logging.Logger;
-import bio.knowledge.validator.logging.LoggerFactory;
 import bio.knowledge.validator.rules.RuleContainer;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ActiveEndpointsTests {
-	
-	@Value(value="${basePath}")
+
+	@Value(value = "${basePath}")
 	public String BASE_PATH;
-	
-	@Autowired RuleContainer ruleContainer;
-	
-	@Rule public TestWatcher testWatcher;
-	@Rule public Stopwatch stopwatch;
-	
+
+	@Autowired
+	RuleContainer ruleContainer;
+
+	@Rule
+	public TestWatcher testWatcher;
+	@Rule
+	public Stopwatch stopwatch;
+
 	@PostConstruct
 	public void init() {
 		testWatcher = ruleContainer.getTestWatcher();
 		stopwatch = ruleContainer.getStopwatch();
 	}
-	
+
 	@Test
-	public void testConceptsCall() {
+	public void testConceptsCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
-		try {
-			conceptsApi.getConcepts(Utils.asList("e"), null, 1, 1);
-		} catch (ApiException e) {
-			fail(e.getMessage());
-		}
+		conceptsApi.getConcepts(Utils.asList("e"), null, 1);
 	}
-	
+
 	@Test
-	public void testConceptDetailsCall() {
+	public void testConceptDetailsCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
-		try {
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1, 1);
-			
-			if (concepts.isEmpty()) {
-				fail("Could not run test since concepts endpoint returned empty");
-			}
-			
-			String conceptId = concepts.get(0).getId();
-			
-			conceptsApi.getConceptDetails(conceptId);
-			
-		} catch (ApiException e) {
-			fail(e.getMessage());
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1);
+
+		if (concepts.isEmpty()) {
+			fail(apiClient, "Could not run test since concepts endpoint returned empty");
 		}
+
+		String conceptId = concepts.get(0).getId();
+
+		conceptsApi.getConceptDetails(conceptId);
 	}
-	
+
 	@Test
-	public void testExactMatchesToConceptIdCall() {
+	public void testExactMatchesToConceptIdCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
-		try {
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1, 1);
-			
-			if (concepts.isEmpty()) {
-				fail("Could not run test since concepts endpoint returned empty");
-			}
-			
-			String conceptId = concepts.get(0).getId();
-			
-			conceptsApi.getExactMatchesToConcept(conceptId);
-			
-		} catch (ApiException e) {
-			fail(e.getMessage());
+
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1);
+
+		if (concepts.isEmpty()) {
+			fail(apiClient, "Could not run test since concepts endpoint returned empty");
 		}
+
+		String conceptId = concepts.get(0).getId();
+		
+		conceptsApi.getExactMatchesToConceptList(Utils.asList(conceptId));
 	}
-	
+
 	@Test
-	public void testExactMatchesToConceptListCall() {
+	public void testExactMatchesToConceptListCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
-		try {
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1, 1);
-			
-			if (concepts.isEmpty()) {
-				fail("Could not run test since concepts endpoint returned empty");
-			}
-			
-			String conceptId = concepts.get(0).getId();
-			
-			conceptsApi.getExactMatchesToConceptList(Utils.asList(conceptId));
-			
-		} catch (ApiException e) {
-			fail(e.getMessage());
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1);
+
+		if (concepts.isEmpty()) {
+			fail(apiClient, "Could not run test since concepts endpoint returned empty");
 		}
+
+		String conceptId = concepts.get(0).getId();
+
+		conceptsApi.getExactMatchesToConceptList(Utils.asList(conceptId));
 	}
-	
+
 	@Test
-	public void testStatementsCall() {
+	public void testStatementsCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		StatementsApi statementsApi = new StatementsApi(apiClient);
-		try {
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1, 1);
-			
-			if (concepts.isEmpty()) {
-				fail("Could not run test since concepts endpoint returned empty");
-			}
-			
-			String conceptId = concepts.get(0).getId();
-			
-			statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null, 1, 1);
-			
-		} catch (ApiException e) {
-			fail(e.getMessage());
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1);
+
+		if (concepts.isEmpty()) {
+			fail(apiClient, "Could not run test since concepts endpoint returned empty");
 		}
+
+		String conceptId = concepts.get(0).getId();
+
+		statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null, 1);
 	}
-	
+
 	@Test
-	public void testEvidenceCall() {
+	public void testEvidenceCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		StatementsApi statementsApi = new StatementsApi(apiClient);
-		try {
-			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 1, 50);
-			
-			if (concepts.isEmpty()) {
-				fail("Could not run test since concepts endpoint returned empty");
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), null, 50);
+
+		if (concepts.isEmpty()) {
+			fail(apiClient, "Could not run test since concepts endpoint returned empty");
+		}
+
+		for (BeaconConcept concept : concepts) {
+			String conceptId = concept.getId();
+			List<BeaconStatement> statements = statementsApi.getStatements(Utils.asList(conceptId), null, null, null,
+					null, 1);
+
+			if (!statements.isEmpty()) {
+				String statementId = statements.get(0).getId();
+
+				statementsApi.getEvidence(statementId, null, 1);
+				return;
 			}
-			
-			for (BeaconConcept concept : concepts) {
-				String conceptId = concept.getId();
-				List<BeaconStatement> statements = statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null, 1, 1);
-				
-				if (!statements.isEmpty()) {
-					String statementId = statements.get(0).getId();
-					
-					statementsApi.getEvidence(statementId, null, 1, 1);
-					return;
-				}
-			}
-			
-			fail("Could not find any evidence to test this endpoint");
-			
-		} catch (ApiException e) {
-			fail(e.getMessage());
 		}
+
+		fail(apiClient, "Could not find any evidence to test this endpoint");
+
 	}
-	
+
 	@Test
-	public void testKmapCall() {
+	public void testKmapCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		MetadataApi metadataApi = new MetadataApi(apiClient);
-		try {
-			metadataApi.getKnowledgeMap();
-		} catch (ApiException e) {
-			fail(e.getMessage());
-		}
+		metadataApi.getKnowledgeMap();
 	}
-	
+
 	@Test
-	public void testTypesCall() {
+	public void testTypesCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		MetadataApi metadataApi = new MetadataApi(apiClient);
-		try {
-			metadataApi.getConceptTypes();
-		} catch (ApiException e) {
-			fail(e.getMessage());
-		}
+		metadataApi.getConceptCategories();
 	}
-	
+
 	@Test
-	public void testPredicatesCall() {
+	public void testPredicatesCall() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		MetadataApi metadataApi = new MetadataApi(apiClient);
-		try {
-			metadataApi.getPredicates();
-		} catch (ApiException e) {
-			fail(e.getMessage());
-		}
+		metadataApi.getPredicates();
 	}
 
 }

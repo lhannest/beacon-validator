@@ -1,13 +1,10 @@
 package bio.knowledge.validator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static bio.knowledge.validator.Assert.assertFalse;
+import static bio.knowledge.validator.Assert.assertTrue;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -25,10 +22,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.api.StatementsApi;
-import bio.knowledge.client.extra.Concept;
 import bio.knowledge.client.model.BeaconConcept;
 import bio.knowledge.client.model.BeaconConceptWithDetails;
 import bio.knowledge.client.model.BeaconStatement;
+import bio.knowledge.client.model.BeaconStatementObject;
+import bio.knowledge.client.model.BeaconStatementSubject;
+import bio.knowledge.client.model.ExactMatchResponse;
 import bio.knowledge.validator.logging.Logger;
 import bio.knowledge.validator.logging.LoggerFactory;
 import bio.knowledge.validator.rules.RuleContainer;
@@ -53,7 +52,6 @@ public class WorkflowTests {
 	}
 	
 	private final Integer EXACT_MATCH_PAGE_SIZE = 10;
-	private final Integer PAGE_NUMBER = 1;
 	private final Integer CONCEPTS_PAGE_SIZE = 100;
 	private final Integer STATEMENTS_PAGE_SIZE = 100;
 	private final List<String> CONCEPTS_KEYWORDS = Utils.asList("e");
@@ -64,14 +62,16 @@ public class WorkflowTests {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		
-		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, PAGE_NUMBER, CONCEPTS_PAGE_SIZE);
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, CONCEPTS_PAGE_SIZE);
 		
 		assertFalse(
+				apiClient,
 				"No concepts found for filter keywords/types: " + CONCEPTS_KEYWORDS + "/" + CONCEPTS_TYPES,
 				concepts == null || concepts.isEmpty()
 		);
 		
 		assertFalse(
+				apiClient,
 				"Requested page size of " + CONCEPTS_PAGE_SIZE + " got " + concepts.size() + " instead",
 				concepts.size() > CONCEPTS_PAGE_SIZE
 		);
@@ -83,9 +83,10 @@ public class WorkflowTests {
 			
 			List<String> synonyoms = concept.getSynonyms();
 			
-			String type = concept.getType();
+			String type = concept.getCategory();
 			
 			assertTrue(
+					apiClient,
 					"Keyword filter failed for: " + concept.getId(),
 					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(name, k)) ||
 					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(definition, k)) ||
@@ -93,6 +94,7 @@ public class WorkflowTests {
 			);
 			
 			assertTrue(
+					apiClient,
 					"Type filter failed for: " + concept.getId(),
 					CONCEPTS_TYPES == null || CONCEPTS_TYPES.stream().anyMatch(type::equals)
 			);
@@ -106,7 +108,7 @@ public class WorkflowTests {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		
-		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, PAGE_NUMBER, CONCEPTS_PAGE_SIZE);
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, CONCEPTS_PAGE_SIZE);
 		
 		for (BeaconConcept concept : concepts) {
 			List<BeaconConceptWithDetails> details = conceptsApi.getConceptDetails(concept.getId());
@@ -115,32 +117,37 @@ public class WorkflowTests {
 				String msg = "Detail %1$s is not the same as concept %1$s";
 				
 				if (detail.getId() == null) logger.warn("Concept " + detail.getId() + " has null ID");
-				if (detail.getType() == null) logger.warn("Concept " + detail.getId() + " has null type");
+				if (detail.getCategory() == null) logger.warn("Concept " + detail.getId() + " has null type");
 				if (detail.getName() == null) logger.warn("Concept " + detail.getId() + " has null name");
 				if (detail.getDefinition() == null) logger.warn("Concept " + detail.getId() + " has null definition");
 				if (detail.getSynonyms() == null) logger.warn("Concept " + detail.getId() + " has null synonyms");
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "ID"),
 						Objects.equals(detail.getId(), concept.getId())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "definition"),
 						Objects.equals(detail.getDefinition(), concept.getDefinition())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "name"),
 						Objects.equals(detail.getName(), concept.getName())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "type"),
-						Objects.equals(detail.getType(), concept.getType())
+						Objects.equals(detail.getCategory(), concept.getCategory())
 				);
 				
 				assertTrue(
+						apiClient,
 						String.format(msg, "synonyms"),
 						Objects.equals(detail.getSynonyms(), concept.getSynonyms())
 				);
@@ -155,39 +162,42 @@ public class WorkflowTests {
 		StatementsApi statementsApi = new StatementsApi(apiClient);
 		
 		//TODO: remove magic number
-		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, PAGE_NUMBER, 4);
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, 1);
 		
 		List<String> c = concepts.stream().map(x -> x.getId()).collect(Collectors.toList());
 		
-		List<BeaconStatement> statements = statementsApi.getStatements(c, null, null, null, null, 1, STATEMENTS_PAGE_SIZE);
+		//TODO: currently times out if more than 1 concept searched at statements endpoint
+		List<BeaconStatement> statements = statementsApi.getStatements(c, null, null, null, null, STATEMENTS_PAGE_SIZE);
 		
 		for (BeaconStatement statement : statements) {
 			boolean anyMatch = false;
 			
 			for (BeaconConcept concept : concepts) {
-				Concept subject = statement.getSubject();
-				Concept object = statement.getObject();
+				BeaconStatementSubject subject = statement.getSubject();
+				BeaconStatementObject object = statement.getObject();
 				
 				String msg = "Concept %s from statement %s does not have the same name and type as result from concept search";
 				
 				if (subject.getId().equals(concept.getId())) {
 					anyMatch = true;
 					assertTrue(
+							apiClient,
 							String.format(msg, subject.getId(), statement.getId()),
-							Objects.equals(subject.getType(), concept.getType()) &&
+							Objects.equals(subject.getCategory(), concept.getCategory()) &&
 							Objects.equals(subject.getName(), concept.getName())
 					);
 				} else if (object.getId().equals(concept.getId())) {
 					anyMatch = true;
 					assertTrue(
+							apiClient,
 							String.format(msg, object.getId(), statement.getId()),
-							Objects.equals(object.getType(), concept.getType()) &&
+							Objects.equals(object.getCategory(), concept.getCategory()) &&
 							Objects.equals(object.getName(), concept.getName())
 					);
 				}
 			}
 			
-			assertTrue("None of the given concepts found in statement " + statement.getId(), anyMatch);
+			assertTrue(apiClient, "None of the given concepts found in statement " + statement.getId(), anyMatch);
 		}
 	}
 	
@@ -196,28 +206,31 @@ public class WorkflowTests {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		
-		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, PAGE_NUMBER, EXACT_MATCH_PAGE_SIZE);
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, EXACT_MATCH_PAGE_SIZE);
 		
 		for (BeaconConcept concept : concepts) {
-			List<String> matches1 = conceptsApi.getExactMatchesToConcept(concept.getId());
-			Set<String> matches1Set = new HashSet<String>(matches1);
+			List<ExactMatchResponse> matches = conceptsApi.getExactMatchesToConceptList(Utils.asList(concept.getId()));
 			
-			assertEquals("The response is not a set", matches1.size(), matches1Set.size());
+			assertTrue(apiClient, 
+						"Exact matches to concept" + concept.getId() + " returned more than 1 response", 
+						matches.size()==1);
 			
-			List<String> matches2 = conceptsApi.getExactMatchesToConceptList(Utils.asList(concept.getId()));
-			Set<String> matches2Set = new HashSet<String>(matches2);
+			ExactMatchResponse match = matches.get(0);
 			
-			assertEquals("The response is not a set", matches2.size(), matches2Set.size());
+			assertTrue(apiClient, 
+						"Searched id doesn't match response id: " + concept.getId(),
+						Objects.equals(concept.getId(), match.getId()));
 			
-			matches1Set.add(concept.getId());
-			matches2Set.add(concept.getId());
+			if (match.getHasExactMatches().size() != 0) {
+				assertTrue(apiClient, "within_domain should be true if exact matches found", match.getWithinDomain());
+			}
 			
-			assertTrue("The two exact match endpoints did not return the same data", matches1Set.equals(matches2Set));
 		}
 	}
 	
 	private boolean contains(String superstring, String substring) {
 		return superstring.toLowerCase().contains(substring.toLowerCase());
 	}
+	
 
 }
