@@ -23,9 +23,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.api.StatementsApi;
-import bio.knowledge.client.extra.Concept;
 import bio.knowledge.client.model.BeaconConcept;
 import bio.knowledge.client.model.BeaconStatement;
+import bio.knowledge.client.model.BeaconStatementObject;
+import bio.knowledge.client.model.BeaconStatementSubject;
 import bio.knowledge.validator.containers.FilterSetContainer;
 import bio.knowledge.validator.containers.FilterSetContainer.FilterSet;
 import bio.knowledge.validator.containers.MetadataContainer;
@@ -64,10 +65,14 @@ public class FilterTests {
 		
 		for (List<String> keywords : keywordsList) {
 			for (List<String> types : typesList) {
-				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 1, 100);
+				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 100);
 				
 				for (BeaconConcept concept : concepts) {
-					assertTrue(apiClient, "Types filter failed for " + concept.getId(), types.contains(concept.getType()));
+					assertTrue(apiClient, "Types filter failed for " + concept.getId(), types.contains(concept.getCategory()));
+					
+					Boolean name = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName()));
+					Boolean definition = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition()));
+					Boolean synonyms = keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)));
 					
 					assertTrue(
 							apiClient,
@@ -99,12 +104,12 @@ public class FilterTests {
 		
 		for (List<String> keywords : keywordsList) {
 			for (List<String> types : typesList) {
-				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, null, 1, FILTER_SIZE);
+				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, null, FILTER_SIZE);
 				
 				List<String> s = concepts.stream().map(concept -> concept.getId()).collect(Collectors.toList());
 				
 				for (String predicate : predicates) {
-					List<BeaconStatement> statements = statementsApi.getStatements(s, predicate, null, keywords, types, 1, 100);
+					List<BeaconStatement> statements = statementsApi.getStatements(s, Utils.asList(predicate), null, keywords, types, 100);
 					
 					List<String> targets = new ArrayList<String>();
 					
@@ -112,11 +117,11 @@ public class FilterTests {
 						assertTrue(
 								apiClient,
 								"Predicate filter failed for statement " + statement.getId(),
-								statement.getPredicate().getName().equals(predicate)
+								statement.getPredicate().getEdgeLabel().equals(predicate)
 						);
 						
-						Concept subject = statement.getSubject();
-						Concept object = statement.getObject();
+						BeaconStatementSubject subject = statement.getSubject();
+						BeaconStatementObject object = statement.getObject();
 						
 						if (s.contains(subject.getId())) {
 							targets.add(object.getId());
@@ -129,7 +134,7 @@ public class FilterTests {
 					
 					targets  = targets.subList(0, Math.min(FILTER_SIZE, targets.size()));
 					
-					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, targets, null, null, 1, 100);
+					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, targets, null, null, 100);
 					
 					for (BeaconStatement statement : targetedStatements) {
 						String subjectId = statement.getSubject().getId();
@@ -161,7 +166,11 @@ public class FilterTests {
 	/**
 	 * Returns true if any term in substring is contained in superstring, false otherwise.
 	 */
-	private boolean contains(String superstring, String substring) {		
+	private boolean contains(String superstring, String substring) {
+		if (substring == null) {
+			return false;
+		}
+		
 		if (substring.contains(" ")) {
 			String[] substrings = substring.split(" ");
 			
@@ -175,6 +184,6 @@ public class FilterTests {
 		superstring = superstring.toLowerCase();
 		substring = substring.toLowerCase();
 		
-		return superstring.contains(substring);
+		return (superstring.contains(substring) || substring.contains(superstring));
 	}
 }

@@ -20,6 +20,7 @@ public class ApiClient extends bio.knowledge.client.ApiClient {
 	
 	private static final String HTTP = "http://";
 	private static final String HTTPS = "https://";
+	private static final Integer TIMEOUT_IN_MILLISEC = 30000;
 	
 	private List<String> queries = new ArrayList<String>();
 	
@@ -51,6 +52,7 @@ public class ApiClient extends bio.knowledge.client.ApiClient {
 		super();
 		
 		this.setConnectTimeout(0);
+		this.setReadTimeout(TIMEOUT_IN_MILLISEC);
 		
 		if (basePath.endsWith("/")) {
 			basePath = basePath.substring(0, basePath.length() - 1);

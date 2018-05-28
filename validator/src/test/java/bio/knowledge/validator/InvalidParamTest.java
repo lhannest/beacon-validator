@@ -48,14 +48,14 @@ public class InvalidParamTest {
 		// Other methods throw a null pointer error without sending a request and so they are not testable.
 		
 		try {
-			conceptsApi.getConcepts(null, null, null, null);
+			conceptsApi.getConcepts(null, null, null);
 			fail(apiClient, message);
 		} catch (ApiException e) {
 			apiClient.clearQueryHistory();
 		}
 		
 		try {
-			statementsApi.getStatements(null, null, null, null, null, null, null);
+			statementsApi.getStatements(null, null, null, null, null, null);
 			fail(apiClient, message);
 		} catch (ApiException e) {
 			apiClient.clearQueryHistory();
