@@ -1,6 +1,9 @@
 *.class
 /.gradle/
 
+**/.settings/**
+.project
+
 /validator/bin/test
 /validator/log
 /.settings/
@@ -12,3 +15,4 @@
 .codegen/
 **/bin/
 **/log/
+
