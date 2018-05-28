@@ -19,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import bio.knowledge.client.ApiException;
 import bio.knowledge.client.api.ConceptsApi;
 import bio.knowledge.client.model.BeaconConcept;
+import bio.knowledge.client.model.ExactMatchResponse;
 import bio.knowledge.validator.rules.RuleContainer;
 
 @RunWith(SpringRunner.class)
@@ -44,7 +45,7 @@ public class CacheTests {
 		ApiClient client = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(client);
 		
-		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("diabetes"), null, 1, 100);
+		List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("diabetes"), null, 100);
 		
 		for (BeaconConcept concept : concepts) {
 			Set<String> clique = new HashSet<String>(Utils.asList(concept.getId()));
@@ -53,9 +54,17 @@ public class CacheTests {
 			while (clique.size() != size) {
 				size = clique.size();
 				
-				List<String> matches = conceptsApi.getExactMatchesToConcept(concept.getId());
+				List<ExactMatchResponse> matches = conceptsApi.getExactMatchesToConceptList(Utils.asList(concept.getId()));
 				
-				clique.addAll(matches);
+				for (ExactMatchResponse m : matches) {
+					if (m.getId().equals(concept.getId())) {
+						clique.addAll(m.getHasExactMatches());
+					}
+				}
+				
+				Assert.assertTrue(client, matches.size() == 1);
+				Assert.assertTrue(client, matches.get(0).getId().equals(concept.getId()));
+				Assert.assertTrue(client, clique.size() > 0);
 			}
 			
 			System.out.println(clique.size());

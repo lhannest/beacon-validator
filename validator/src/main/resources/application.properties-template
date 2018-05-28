@@ -1,0 +1,9 @@
+basePath = https://biolink-kb.ncats.io
+
+
+####################
+# Aggregator tests #
+####################
+biolinkBeaconPath = https://biolink-kb.ncats.io
+referenceBeaconPath = https://rkb.ncats.io
+kbaPath = https://kba.ncats.io
