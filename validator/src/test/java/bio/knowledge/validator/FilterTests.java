@@ -5,6 +5,7 @@ import static bio.knowledge.validator.Assert.assertTrue;
 import static bio.knowledge.validator.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,18 +69,18 @@ public class FilterTests {
 				List<BeaconConcept> concepts = conceptsApi.getConcepts(keywords, types, 100);
 				
 				for (BeaconConcept concept : concepts) {
-					assertTrue(apiClient, "Types filter failed for " + concept.getId(), types.contains(concept.getCategory()));
+					assertTrue(apiClient, "Types filter failed for " + concept.getId(), !Collections.disjoint(types, concept.getCategories()));
 					
 					Boolean name = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName()));
-					Boolean definition = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition()));
-					Boolean synonyms = keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)));
+					Boolean definition = keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDescription()));
+//					Boolean synonyms = keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)));
 					
 					assertTrue(
 							apiClient,
 							"Keywords filter failed for " + concept.getId(),
 							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getName())) ||
-							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDefinition())) ||
-							keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)))
+							keywords.stream().anyMatch(keyword -> contains(keyword, concept.getDescription()))
+//							|| keywords.stream().anyMatch(keyword -> concept.getSynonyms().stream().anyMatch(synonym -> contains(keyword, synonym)))
 					);
 				}
 			}
@@ -91,8 +92,8 @@ public class FilterTests {
 	public void testStatementsFilters() throws ApiException {
 		FilterSet filterSet = filterSetContainer.getFilterSet();
 		
-		List<String> predicates = metadataContainer.getPredicates().stream().map(
-				predicate -> predicate.getId()
+		List<String> edgeLabels = metadataContainer.getPredicates().stream().map(
+				predicate -> predicate.getEdgeLabel()
 		).collect(Collectors.toList());
 		
 		List<List<String>> typesList = filterSet.getTypesList();
@@ -108,16 +109,16 @@ public class FilterTests {
 				
 				List<String> s = concepts.stream().map(concept -> concept.getId()).collect(Collectors.toList());
 				
-				for (String predicate : predicates) {
-					List<BeaconStatement> statements = statementsApi.getStatements(s, Utils.asList(predicate), null, keywords, types, 100);
+				for (String edgeLabel : edgeLabels) {
+					List<BeaconStatement> statements = statementsApi.getStatements(s, edgeLabel, null, null, keywords, types, 100);
 					
 					List<String> targets = new ArrayList<String>();
 					
 					for (BeaconStatement statement : statements) {
 						assertTrue(
 								apiClient,
-								"Predicate filter failed for statement " + statement.getId(),
-								statement.getPredicate().getEdgeLabel().equals(predicate)
+								"EdgeLabel filter failed for statement " + statement.getId(),
+								statement.getPredicate().getEdgeLabel().equals(edgeLabel)
 						);
 						
 						BeaconStatementSubject subject = statement.getSubject();
@@ -134,7 +135,7 @@ public class FilterTests {
 					
 					targets  = targets.subList(0, Math.min(FILTER_SIZE, targets.size()));
 					
-					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, targets, null, null, 100);
+					List<BeaconStatement> targetedStatements = statementsApi.getStatements(s, null, null, targets, null, null, 100);
 					
 					for (BeaconStatement statement : targetedStatements) {
 						String subjectId = statement.getSubject().getId();

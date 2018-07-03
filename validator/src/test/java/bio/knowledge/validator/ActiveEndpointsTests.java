@@ -112,11 +112,11 @@ public class ActiveEndpointsTests {
 
 		String conceptId = concepts.get(0).getId();
 
-		statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null, 1);
+		statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null, null, 1);
 	}
 
 	@Test
-	public void testEvidenceCall() throws ApiException {
+	public void testStatementDetails() throws ApiException {
 		ApiClient apiClient = new ApiClient(BASE_PATH);
 		ConceptsApi conceptsApi = new ConceptsApi(apiClient);
 		StatementsApi statementsApi = new StatementsApi(apiClient);
@@ -128,13 +128,13 @@ public class ActiveEndpointsTests {
 
 		for (BeaconConcept concept : concepts) {
 			String conceptId = concept.getId();
-			List<BeaconStatement> statements = statementsApi.getStatements(Utils.asList(conceptId), null, null, null,
+			List<BeaconStatement> statements = statementsApi.getStatements(Utils.asList(conceptId), null, null, null, null,
 					null, 1);
 
 			if (!statements.isEmpty()) {
 				String statementId = statements.get(0).getId();
 
-				statementsApi.getEvidence(statementId, null, 1);
+				statementsApi.getStatementDetails(statementId, null, 1);
 				return;
 			}
 		}

@@ -55,7 +55,7 @@ public class InvalidParamTest {
 		}
 		
 		try {
-			statementsApi.getStatements(null, null, null, null, null, null);
+			statementsApi.getStatements(null, null, null, null, null, null, null);
 			fail(apiClient, message);
 		} catch (ApiException e) {
 			apiClient.clearQueryHistory();

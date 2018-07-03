@@ -79,24 +79,21 @@ public class WorkflowTests {
 		// Test that the filters apply to each concept
 		for (BeaconConcept concept : concepts) {
 			String name = concept.getName();
-			String definition = concept.getDefinition();
+			String definition = concept.getDescription();
 			
-			List<String> synonyoms = concept.getSynonyms();
-			
-			String type = concept.getCategory();
+			List<String> categories = concept.getCategories();
 			
 			assertTrue(
 					apiClient,
 					"Keyword filter failed for: " + concept.getId(),
 					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(name, k)) ||
-					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(definition, k)) ||
-					synonyoms.stream().anyMatch(s -> CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(s, k)))
+					CONCEPTS_KEYWORDS.stream().anyMatch(k -> contains(definition, k))
 			);
 			
 			assertTrue(
 					apiClient,
 					"Type filter failed for: " + concept.getId(),
-					CONCEPTS_TYPES == null || CONCEPTS_TYPES.stream().anyMatch(type::equals)
+					CONCEPTS_TYPES == null || CONCEPTS_TYPES.stream().anyMatch(categories::contains)
 			);
 		}
 	}
@@ -111,48 +108,41 @@ public class WorkflowTests {
 		List<BeaconConcept> concepts = conceptsApi.getConcepts(CONCEPTS_KEYWORDS, CONCEPTS_TYPES, CONCEPTS_PAGE_SIZE);
 		
 		for (BeaconConcept concept : concepts) {
-			List<BeaconConceptWithDetails> details = conceptsApi.getConceptDetails(concept.getId());
+			BeaconConceptWithDetails detail = conceptsApi.getConceptDetails(concept.getId());
 			
-			for (BeaconConceptWithDetails detail : details) {
-				String msg = "Detail %1$s is not the same as concept %1$s";
+			String msg = "Detail %1$s is not the same as concept %1$s, conceptId: %s";
 				
-				if (detail.getId() == null) logger.warn("Concept " + detail.getId() + " has null ID");
-				if (detail.getCategory() == null) logger.warn("Concept " + detail.getId() + " has null type");
-				if (detail.getName() == null) logger.warn("Concept " + detail.getId() + " has null name");
-				if (detail.getDefinition() == null) logger.warn("Concept " + detail.getId() + " has null definition");
-				if (detail.getSynonyms() == null) logger.warn("Concept " + detail.getId() + " has null synonyms");
-				
-				assertTrue(
-						apiClient,
-						String.format(msg, "ID"),
-						Objects.equals(detail.getId(), concept.getId())
-				);
-				
-				assertTrue(
-						apiClient,
-						String.format(msg, "definition"),
-						Objects.equals(detail.getDefinition(), concept.getDefinition())
-				);
-				
-				assertTrue(
-						apiClient,
-						String.format(msg, "name"),
-						Objects.equals(detail.getName(), concept.getName())
-				);
-				
-				assertTrue(
-						apiClient,
-						String.format(msg, "type"),
-						Objects.equals(detail.getCategory(), concept.getCategory())
-				);
-				
-				assertTrue(
-						apiClient,
-						String.format(msg, "synonyms"),
-						Objects.equals(detail.getSynonyms(), concept.getSynonyms())
-				);
-			}
+			if (detail.getId() == null) logger.warn("Concept " + detail.getId() + " has null ID");
+			if (detail.getCategories() == null) logger.warn("Concept " + detail.getId() + " has null type");
+			if (detail.getName() == null) logger.warn("Concept " + detail.getId() + " has null name");
+			if (detail.getDescription() == null) logger.warn("Concept " + detail.getId() + " has null definition");
+			if (detail.getSynonyms() == null) logger.warn("Concept " + detail.getId() + " has null synonyms");
+			
+			assertTrue(
+					apiClient,
+					String.format(msg, "ID", concept.getId()),
+					Objects.equals(detail.getId(), concept.getId())
+			);
+			
+			assertTrue(
+					apiClient,
+					String.format(msg, "definition", concept.getId()),
+					Objects.equals(detail.getDescription(), concept.getDescription())
+			);
+			
+			assertTrue(
+					apiClient,
+					String.format(msg, "name", concept.getId()),
+					Objects.equals(detail.getName(), concept.getName())
+			);
+			
+			assertTrue(
+					apiClient,
+					String.format(msg, "type", concept.getId()),
+					Objects.equals(detail.getCategories(), concept.getCategories())
+			);
 		}
+		
 	}
 	
 	@Test
@@ -167,7 +157,7 @@ public class WorkflowTests {
 		List<String> c = concepts.stream().map(x -> x.getId()).collect(Collectors.toList());
 		
 		//TODO: currently times out if more than 1 concept searched at statements endpoint
-		List<BeaconStatement> statements = statementsApi.getStatements(c, null, null, null, null, STATEMENTS_PAGE_SIZE);
+		List<BeaconStatement> statements = statementsApi.getStatements(c, null, null, null, null, null, STATEMENTS_PAGE_SIZE);
 		
 		for (BeaconStatement statement : statements) {
 			boolean anyMatch = false;
@@ -183,7 +173,7 @@ public class WorkflowTests {
 					assertTrue(
 							apiClient,
 							String.format(msg, subject.getId(), statement.getId()),
-							Objects.equals(subject.getCategory(), concept.getCategory()) &&
+							Objects.equals(subject.getCategories(), concept.getCategories()) &&
 							Objects.equals(subject.getName(), concept.getName())
 					);
 				} else if (object.getId().equals(concept.getId())) {
@@ -191,7 +181,7 @@ public class WorkflowTests {
 					assertTrue(
 							apiClient,
 							String.format(msg, object.getId(), statement.getId()),
-							Objects.equals(object.getCategory(), concept.getCategory()) &&
+							Objects.equals(object.getCategories(), concept.getCategories()) &&
 							Objects.equals(object.getName(), concept.getName())
 					);
 				}
