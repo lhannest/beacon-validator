@@ -64,9 +64,9 @@ public class FilterSetContainer {
 			List<BeaconConcept> concepts = conceptsApi.getConcepts(Utils.asList("e"), Utils.asList(type), 100);
 			
 			for (BeaconConcept concept : concepts) {
-				if (concept.getCategory().equals(type)) {
+				if (concept.getCategories().contains(type)) {
 					keywords.add(concept.getName());
-					keywords.addAll(concept.getSynonyms());
+					//keywords.addAll(concept.getSynonyms());
 					break;
 				}
 			}
