@@ -54,7 +54,7 @@ public class WorkflowTests {
 	private final Integer EXACT_MATCH_PAGE_SIZE = 10;
 	private final Integer CONCEPTS_PAGE_SIZE = 100;
 	private final Integer STATEMENTS_PAGE_SIZE = 100;
-	private final List<String> CONCEPTS_KEYWORDS = Utils.asList("e");
+	private final List<String> CONCEPTS_KEYWORDS = Utils.asList("diabetes");
 	private final List<String> CONCEPTS_TYPES = null;
 	
 	@Test
@@ -219,7 +219,11 @@ public class WorkflowTests {
 	}
 	
 	private boolean contains(String superstring, String substring) {
-		return superstring.toLowerCase().contains(substring.toLowerCase());
+		if (superstring != null) {
+			return superstring.toLowerCase().contains(substring.toLowerCase());
+		} else {
+			return false;
+		}
 	}
 	
 

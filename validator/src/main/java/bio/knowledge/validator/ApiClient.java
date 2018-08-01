@@ -20,7 +20,7 @@ public class ApiClient extends bio.knowledge.client.ApiClient {
 	
 	private static final String HTTP = "http://";
 	private static final String HTTPS = "https://";
-	private static final Integer TIMEOUT_IN_MILLISEC = 30000;
+	private static final Integer TIMEOUT_IN_MILLISEC = 180000; // 3 minutes
 	
 	private List<String> queries = new ArrayList<String>();
 	
